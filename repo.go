@@ -21,10 +21,11 @@ type Area struct {
 }
 
 type Server struct {
-	Name string `json:"name"`
-	Desc string `json:"desc"`
-	IP   string `json:"ip"`
-	User string `json:"user"`
+	Name        string `json:"name"`
+	Desc        string `json:"desc"`
+	IP          string `json:"ip"`
+	User        string `json:"user"`
+	Description string `json:"description`
 }
 
 func InspectRepo(name string) ([]Area, error) {
