@@ -1,0 +1,33 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: jumper
+  namespace: alauda-system
+  annotations:
+    alauda.io/product: Alauda Devops
+    alauda.io/productVersion: v0.1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "jumper"
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        alauda.io/product: Alauda Devops
+        alauda.io/productVersion: v0.1
+      labels:
+        app: "jumper"
+    spec:
+      containers:
+        - name: server
+          image: github.com/chengjingtao/jumper/cmd
+          imagePullPolicy: Always
+      imagePullSecrets:
+        - name: alaudak8s
+

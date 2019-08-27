@@ -28,3 +28,11 @@ AREA: devops
 ➜ jump to devops/int
 /usr/bin/ssh ssh root@1.1.1.1
 ```
+
+
+docker run --rm \
+    -v $(pwd):/workspace \
+    -e DOCKER_CONFIG=/root/.docker \
+    -v ${HOME}/.docker:/root/.docker \
+    index.alauda.cn/alaudak8s/kaniko-project-executor:latest \
+    --dockerfile /workspace/images/Dockerfile --destination index.alauda.cn/alaudak8s/jumper:v0.0.1 --context /workspace

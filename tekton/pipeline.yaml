@@ -1,0 +1,148 @@
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineResource
+metadata:
+  name: jumper-git
+spec:
+  type: git
+  params:
+  - name: url
+    value: https://github.com/chengjingtao/jumper
+  - name: revision
+    value: v0.0.1
+  - name: imageRegistry
+    value: index.alauda.cn/alaudak8s
+---
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineResource
+metadata:
+  name: jumper-image
+spec:
+  type: image
+  params:
+    - name: url
+      value: index.alauda.cn/alaudak8s/jumper
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: publish-image
+spec:
+  inputs:
+    resources:
+      - name: source
+        type: git
+        targetPath: go/src/github.com/chengjingtao/jumper
+    params:
+      - name: versionTag
+        description: version of your image
+      - name: imageRegistry
+        description: image registry
+      - name: pathToProject
+        description: path to the folder in the go/src
+  outputs:
+    resource:
+      - name: image
+        type: image
+  volumes:
+    - name: index-alauda-cn-secret
+      secret:
+        secretName: docker-secret
+  steps:
+  - name: build-push-image
+    image: gcr.io/kaniko-project/executor:v0.9.0
+    command:
+      - /kaniko/executor
+    args:
+      - --dockerfile==/workspace/go/src/github.com/chengjingtao/jumper/images/Dockerfile
+      - --destination=$(inputs.params.imageRegistry)/$(inputs.params.pathToProject)/$(outputs.resources.image.url)
+      - --context=/workspace/go/src/github.com/chengjingtao/jumper
+    volumeMounts:
+      - name: index-alauda-cn-secret
+        mountPath: /root/.docker
+  - name: run-ko
+    image: gcr.io/tekton-releases/ko-ci
+    env:
+      - name: KO_DOCKER_REPO
+        value: ${input.params.imageRegistry}
+      - name: GOPATH
+        value: /workspace/go
+    command:
+      - /bin/bash
+    args:
+      - -ce
+      -  |
+        set -e
+        set -x
+        export SOURCE_DATE_EPOCH=`date +%s`
+        cd /workspace/go/src/github.com/chengjingtao/jumper
+        ko resolve -f /workspace/go/src/github.com/chengjingtao/jumper/tekton/deploy.yaml > /workspace/release.yaml
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Pipeline
+metadata:
+  name: pipeline-build
+spec:
+  params:
+    - name: package
+      description: package to release
+      default: github.com/chengjingtao/jumper
+    - name: versionTag
+      description: version that will be taged
+  resources:
+    - name: sourceRepo
+      type: git
+    - name: jumperImage
+      type: image
+  tasks:
+  - name: lint
+    taskRef:
+      name: golangci-lint
+    params:
+      - name: package
+        value: ${params.package}
+      - name: flags
+        value: -v
+    resources:
+      inputs:
+        - name: source
+          resource: sourceRepo
+  - name: unit-tests
+    runAfter: [lint]
+    taskRef:
+      name: golang-test
+    params:
+      - name: package
+        value: ${params.package}
+    resource:
+      inputs:
+        - name: source
+          resource: sourceRepo
+  - name: build
+    runAfter: [lint]
+    taskRef:
+      name: golang-build
+    params:
+      - name: package
+        value: ${params.package}
+    resource:
+      inputs:
+        - name: source
+          resource: sourceRepo
+  # - name: publish-image
+  #   runAfter: [build, unit-tests]
+  #   taskRef:
+  #     name: publish-image
+  #   params:
+  #     - name: pathToProject
+  #       value: ${params.package}
+  #     - name: versionTag
+  #       value: ${params.versionTag}
+  #     - name: imageRegistry
+  #       value: ${params.imageRegistry}
+  #   resource:
+  #     inputs:
+  #       - name: source
+  #         resource: sourceRepo
+  #     outputs:
+  #       - name: image
+  #         resource: jumperImage
