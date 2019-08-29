@@ -1,0 +1,11 @@
+run:
+  skip-dirs:
+  - vendor
+linters-settings:
+  errcheck:
+    exclude: .errcheck.txt
+linters:
+  enable:
+  - errcheck
+  - gofmt
+  - goimports
