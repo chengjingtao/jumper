@@ -1,0 +1,11 @@
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineRun
+metadata:
+  name: jumper-pipeline-run-1
+spec:
+  pipelineRef:
+    name: pipeline-build
+  resources:
+    - name: sourceRepo
+      resourceRef:
+        name: jumper-git
