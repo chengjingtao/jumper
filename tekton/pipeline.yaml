@@ -149,7 +149,7 @@ spec:
     params:
       - name: DOCKERFILE
         value: ./images/Dockerfile
-    resource:
+    resources:
       inputs:
         - name: source
           resource: sourceRepo
