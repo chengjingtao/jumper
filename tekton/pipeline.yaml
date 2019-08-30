@@ -139,6 +139,9 @@ spec:
       inputs:
         - name: source
           resource: sourceRepo
+      outputs:
+        - name: source
+          resource: sourceRepo
   - name: publish-image
     runAfter: [build, unit-tests]
     taskRef:
@@ -150,6 +153,8 @@ spec:
       inputs:
         - name: source
           resource: sourceRepo
+          from:
+            - build
       outputs:
         - name: image
           resource: jumperImage
