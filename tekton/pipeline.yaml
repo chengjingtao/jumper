@@ -94,8 +94,8 @@ spec:
   resources:
     - name: sourceRepo
       type: git
-#    - name: jumperImage
-#      type: image
+    - name: jumperImage
+      type: image
   tasks:
   - name: lint
     taskRef:
