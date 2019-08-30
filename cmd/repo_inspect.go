@@ -43,9 +43,9 @@ func (cmd *repoInspectCmd) run() error {
 	}
 
 	for _, area := range areas {
-		cmd.out.Write([]byte(fmt.Sprintf("AREA: %s\n", area.Name)))
+		_, _ = cmd.out.Write([]byte(fmt.Sprintf("AREA: %s\n", area.Name)))
 		for _, server := range area.Servers {
-			cmd.out.Write([]byte(fmt.Sprintf(" => %s %s@%s %s\n", server.Name, server.User, server.IP, server.Description)))
+			_, _ = cmd.out.Write([]byte(fmt.Sprintf(" => %s %s@%s %s\n", server.Name, server.User, server.IP, server.Description)))
 		}
 	}
 

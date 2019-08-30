@@ -36,11 +36,11 @@ func (cmd *repoListCmd) run() error {
 	}
 
 	if len(repos) == 0 {
-		cmd.out.Write([]byte("Empty repos ~\n"))
+		_, _ = cmd.out.Write([]byte("Empty repos ~\n"))
 	}
 
 	for _, item := range repos {
-		cmd.out.Write([]byte(fmt.Sprintf("%s  %s\n", item.Name, item.Url)))
+		_, _ = cmd.out.Write([]byte(fmt.Sprintf("%s  %s\n", item.Name, item.Url)))
 	}
 
 	return nil

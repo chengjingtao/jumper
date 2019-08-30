@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -28,6 +29,10 @@ func newRootCMD(args []string) *cobra.Command {
 	cmd.AddCommand(newToTargetCmd(out))
 	cmd.AddCommand(newVersionCmd(out))
 
-	flags.Parse(args)
+	err := flags.Parse(args)
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
 	return cmd
 }

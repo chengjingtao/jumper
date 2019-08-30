@@ -17,7 +17,7 @@ import (
 
 type Area struct {
 	Name    string   `json:"-"`
-	Servers []Server `json:"servers`
+	Servers []Server `json:"servers"`
 }
 
 type Server struct {
@@ -25,7 +25,7 @@ type Server struct {
 	Desc        string `json:"desc"`
 	IP          string `json:"ip"`
 	User        string `json:"user"`
-	Description string `json:"description`
+	Description string `json:"description"`
 }
 
 func InspectRepo(name string) ([]Area, error) {
