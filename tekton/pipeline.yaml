@@ -21,61 +21,64 @@ spec:
   params:
     - name: url
       value: index.alauda.cn/alaudak8s/jumper
----
-apiVersion: tekton.dev/v1alpha1
-kind: Task
-metadata:
-  name: publish-image
-spec:
-  inputs:
-    resources:
-      - name: source
-        type: git
-        targetPath: go/src/github.com/chengjingtao/jumper
-    params:
-      - name: versionTag
-        description: version of your image
-      - name: imageRegistry
-        description: image registry
-      - name: pathToProject
-        description: path to the folder in the go/src
-  outputs:
-    resources:
-      - name: image
-        type: image
-  volumes:
-    - name: index-alauda-cn-secret
-      secret:
-        secretName: docker-secret
-  steps:
-  - name: build-push-image
-    image: gcr.io/kaniko-project/executor:v0.9.0
-    command:
-      - /kaniko/executor
-    args:
-      - --dockerfile==/workspace/go/src/github.com/chengjingtao/jumper/images/Dockerfile
-      - --destination=$(inputs.params.imageRegistry)/$(inputs.params.pathToProject)/$(outputs.resources.image.url)
-      - --context=/workspace/go/src/github.com/chengjingtao/jumper
-    volumeMounts:
-      - name: index-alauda-cn-secret
-        mountPath: /root/.docker
-  - name: run-ko
-    image: gcr.io/tekton-releases/ko-ci
-    env:
-      - name: KO_DOCKER_REPO
-        value: ${input.params.imageRegistry}
-      - name: GOPATH
-        value: /workspace/go
-    command:
-      - /bin/bash
-    args:
-      - -ce
-      -  |
-        set -e
-        set -x
-        export SOURCE_DATE_EPOCH=`date +%s`
-        cd /workspace/go/src/github.com/chengjingtao/jumper
-        ko resolve -f /workspace/go/src/github.com/chengjingtao/jumper/tekton/deploy.yaml > /workspace/release.yaml
+# ---
+# apiVersion: tekton.dev/v1alpha1
+# kind: Task
+# metadata:
+#   name: publish-image
+# spec:
+#   inputs:
+#     resources:
+#       - name: source
+#         type: git
+#     params:
+#       - name: versionTag
+#         description: version of your image
+#       - name: imageRegistry
+#         description: image registry
+#       - name: pathToProject
+#         description: path to the folder in the go/src
+#   outputs:
+#     resources:
+#       - name: image
+#         type: image
+#   volumes:
+#     - name: index-alauda-cn-secret
+#       secret:
+#         secretName: docker-secret
+#   steps:
+#   - name: build-push-image
+#     image: gcr.io/kaniko-project/executor:v0.9.0
+#     workingdir: /workspace/source
+#     command:
+#       - /kaniko/executor
+#     env:
+#     - name: DOCKER_CONFIG
+#       value: /builder/home/.docker
+#     args:
+#       - --dockerfile==/workspace/go/src/github.com/chengjingtao/jumper/images/Dockerfile
+#       - --destination=$(inputs.params.imageRegistry)/$(inputs.params.pathToProject)/$(outputs.resources.image.url)
+#       - --context=/workspace/go/src/github.com/chengjingtao/jumper
+#     volumeMounts:
+#       - name: index-alauda-cn-secret
+#         mountPath: /root/.docker
+  # - name: run-ko
+  #   image: gcr.io/tekton-releases/ko-ci
+  #   env:
+  #     - name: KO_DOCKER_REPO
+  #       value: ${input.params.imageRegistry}
+  #     - name: GOPATH
+  #       value: /workspace/go
+  #   command:
+  #     - /bin/bash
+  #   args:
+  #     - -ce
+  #     -  |
+  #       set -e
+  #       set -x
+  #       export SOURCE_DATE_EPOCH=`date +%s`
+  #       cd /workspace/go/src/github.com/chengjingtao/jumper
+  #       ko resolve -f /workspace/go/src/github.com/chengjingtao/jumper/tekton/deploy.yaml > /workspace/release.yaml
 ---
 apiVersion: tekton.dev/v1alpha1
 kind: Pipeline
@@ -136,21 +139,17 @@ spec:
       inputs:
         - name: source
           resource: sourceRepo
-  # - name: publish-image
-  #   runAfter: [build, unit-tests]
-  #   taskRef:
-  #     name: publish-image
-  #   params:
-  #     - name: pathToProject
-  #       value: ${params.package}
-  #     - name: versionTag
-  #       value: ${params.versionTag}
-  #     - name: imageRegistry
-  #       value: ${params.imageRegistry}
-  #   resource:
-  #     inputs:
-  #       - name: source
-  #         resource: sourceRepo
-  #     outputs:
-  #       - name: image
-  #         resource: jumperImage
+  - name: publish-image
+    runAfter: [build, unit-tests]
+    taskRef:
+      name: kaniko
+    params:
+      - name: DOCKERFILE
+        value: ./images/Dockerfile
+    resource:
+      inputs:
+        - name: source
+          resource: sourceRepo
+      outputs:
+        - name: image
+          resource: jumperImage
